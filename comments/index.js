@@ -13,19 +13,21 @@ app.post("/comment/:id", async (req, res) => {
   const commentsByPost = comment[req.params.id] || [];
   commentsByPost.push({ id: commentId, content, status: "pending" });
   comment[req.params.id] = commentsByPost;
-  await axios.post("http://localhost:4005/events", {
-    type: "CommentCreated",
-    data: {
-      id: commentId,
-      content,
-      postId: req.params.id,
-      status: "pending",
-    },
-  });
+  await axios
+    .post("http://event-bus-srv:4005/events", {
+      type: "CommentCreated",
+      data: {
+        id: commentId,
+        content,
+        postId: req.params.id,
+        status: "pending",
+      },
+    })
+    .catch((err) => console.log(err));
   res.status(200).json(commentsByPost);
 });
 
-app.get("/comment/:id", (req, res) => {
+app.get("/get/comment/:id", (req, res) => {
   const { id } = req.params;
   const data = comment[req.params.id];
   res.status(200).json(data);
@@ -39,15 +41,17 @@ app.post("/events", async (req, res) => {
     const wholeComment = comment[postId];
     const commentById = wholeComment.find((comme) => comme.id === id);
     commentById.status = status;
-    await axios.post("http://localhost:4005/events", {
-      type: "CommentUpdated",
-      data: {
-        id,
-        postId,
-        content,
-        status: status,
-      },
-    });
+    await axios
+      .post("http://event-bus-srv:4005/events", {
+        type: "CommentUpdated",
+        data: {
+          id,
+          postId,
+          content,
+          status: status,
+        },
+      })
+      .catch((err) => console.log(err));
   }
   res.status(200).json("event recived on comment");
 });
